@@ -5,9 +5,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import axiosInstance from "@/lib/axios";
 import { useEffect, useState } from "react";
-import type { IGenericErrorResponse, TResponseSuccess } from "@/types";
 import { toast } from "sonner";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "@/hooks/useAuth";
+import type { TLoginResponse } from "@/types";
 
 // Zod schema
 const loginSchema = z.object({
@@ -21,8 +22,12 @@ const loginSchema = z.object({
 type TLoginData = z.infer<typeof loginSchema>;
 
 const Login = () => {
+  const navigate = useNavigate();
+  const { storeData, isAuthenticated } = useAuth();
+
   const [isLogging, setIsLogging] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState("");
+
   const {
     register,
     handleSubmit,
@@ -36,24 +41,29 @@ const Login = () => {
     },
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated]);
+
   const onSubmit = async (payload: TLoginData) => {
     setIsLogging(true);
     try {
-      const { data }: { data: TResponseSuccess } = await axiosInstance.post(
+      const { data } = await axiosInstance.post<TLoginResponse>(
         "/v1/auth/login",
         payload
       );
 
       if (data?.success) {
-        const user = data?.data?.data?.userInfo;
-        const accessToken = data?.data?.data?.token;
+        const user = data?.data?.userInfo;
+        const accessToken = data?.data?.token;
 
-        // Save to localStorage
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("accessToken", accessToken);
+        storeData(user, accessToken);
 
         setErrorMessage("");
         toast.success(data?.message);
+        navigate("/");
       }
       reset();
     } catch (error: any) {

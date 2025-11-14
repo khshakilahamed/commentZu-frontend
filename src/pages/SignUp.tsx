@@ -4,10 +4,11 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import axiosInstance from "@/lib/axios";
-import { useState } from "react";
-import type { TResponseSuccess } from "@/types";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router";
+import type { TSignUpResponse } from "@/types";
+import { useAuth } from "@/hooks/useAuth";
 
 // Zod schema
 const signUpSchema = z.object({
@@ -33,6 +34,8 @@ type TSignUpData = z.infer<typeof signUpSchemaWithRefine>;
 
 const SignUp = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState("");
   const {
@@ -48,12 +51,18 @@ const SignUp = () => {
     },
   });
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated]);
+
   const onSubmit = async (payload: Partial<TSignUpData>) => {
     setIsLoading(true);
     try {
       delete payload["confirmPassword"];
 
-      const { data }: { data: TResponseSuccess } = await axiosInstance.post(
+      const { data } = await axiosInstance.post<TSignUpResponse>(
         "/v1/auth/register",
         payload
       );

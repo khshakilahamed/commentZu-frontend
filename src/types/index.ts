@@ -15,17 +15,6 @@ export type TMeta = {
       total: number;
 }
 
-export type TResponseData = {
-      data: any;
-      meta: TMeta
-}
-export type TResponseSuccess = {
-      statusCode: number;
-      success: boolean;
-      message: string;
-      data?: TResponseData
-};
-
 export type TUser = {
       _id: string;
       firstName: string;
@@ -34,3 +23,18 @@ export type TUser = {
       createdAt?: string;
       updatedAt?: string;
 }
+
+export interface ILoginData {
+  token: string;
+  userInfo: TUser;
+}
+
+export type IApiResponse<T> = {
+  success: boolean;
+  statusCode: number;
+  message: string;
+  data: T;
+}
+
+export type TLoginResponse = IApiResponse<ILoginData>;
+export type TSignUpResponse = IApiResponse<string>;
