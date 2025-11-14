@@ -70,9 +70,9 @@ const SignUp = () => {
       if (data?.success) {
         setErrorMessage("");
         toast.success(data?.message);
+        reset();
         navigate("/login");
       }
-      reset();
     } catch (error: any) {
       setErrorMessage(error?.message);
     } finally {

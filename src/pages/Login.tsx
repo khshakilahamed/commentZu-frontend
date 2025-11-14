@@ -63,9 +63,9 @@ const Login = () => {
 
         setErrorMessage("");
         toast.success(data?.message);
+        reset();
         navigate("/");
       }
-      reset();
     } catch (error: any) {
       setErrorMessage(error?.message);
     } finally {

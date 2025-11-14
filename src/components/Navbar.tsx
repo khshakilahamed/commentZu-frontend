@@ -16,7 +16,7 @@ const Navbar = () => {
   const { user, logout } = useAuth();
 
   return (
-    <div className="mx-auto max-w-5xl py-5 px-3 flex flex-wrap items-center justify-between shadow">
+    <div className="py-5 px-3 flex flex-wrap items-center justify-between shadow">
       <h2 className="text-2xl sm:text-3xl font-bold text-primary">CommentZu</h2>
       <div>
         <DropdownMenu modal={false}>
