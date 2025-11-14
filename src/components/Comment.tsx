@@ -40,7 +40,7 @@ const Comment = () => {
     SORT_BY.NEWEST
   );
   const [page, setPage] = useState<number>(1);
-  const [limit, _] = useState<number>(2);
+  const [limit, _] = useState<number>(10);
   const [loading, setLoading] = useState(true);
   const [isPostingComment, setIsPostingComment] = useState(false);
   const { isConnected, emit, on, off } = useSocket();
@@ -157,7 +157,7 @@ const Comment = () => {
         payload
       );
       if (data?.success) {
-        setComments((prev) => [data.data, ...prev]);
+        // setComments((prev) => [data.data, ...prev]);
         emit("comment:add", data.data);
         reset();
       }
@@ -195,8 +195,8 @@ const Comment = () => {
       </Card>
 
       <Card className="px-5">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-2xl text-primary">
+        <div className="flex flex-wrap justify-between items-center gap-2 mb-3">
+          <h2 className="text-xl sm:text-2xl text-primary">
             Total Displaying: {comments?.length ?? 0}
           </h2>
 

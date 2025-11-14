@@ -126,9 +126,9 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
       if (data?.success) {
         setRepliesMap((prev) => ({
           ...prev,
-          [comment._id]: [data.data, ...(prev[comment._id] || [])],
+          [comment._id]: [...(prev[comment._id] || []), data.data],
         }));
-        emit("comment:reply:add", data.data);
+        // emit("comment:reply:add", data.data);
         reset();
       }
     } catch (_) {
@@ -143,13 +143,17 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
     <div className="p-2 border rounded-lg">
       <div>
         <h2 className="text-primary font-bold">
-          {comment?.author?.firstName} {comment?.author?.lastName}
+          {comment?.author?._id === user?._id
+            ? "You"
+            : `${comment?.author?.firstName} ${comment?.author?.lastName}`}
         </h2>
-        <p className="text-gray-400 text-sm">{formatDateTime(comment?.createdAt)}</p>
+        <p className="text-gray-400 text-sm">
+          {formatDateTime(comment?.createdAt)}
+        </p>
         <p>{comment?.content}</p>
       </div>
 
-      <div className="flex gap-3 mt-2">
+      <div className="flex flex-wrap items-center gap-3 mt-2">
         {/* Like */}
         <p
           className="flex items-center gap-0.5 cursor-pointer"
@@ -205,9 +209,13 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
                 replies.map((reply) => (
                   <div key={reply._id} className="border rounded-lg p-2 ml-4">
                     <h2 className="text-sm text-primary font-bold">
-                      {reply.author.firstName} {reply.author.lastName}
+                      {reply?.author?._id === user?._id
+                        ? "You"
+                        : `${comment?.author?.firstName} ${comment?.author?.lastName}`}
                     </h2>
-                    <p className="text-gray-400 text-sm">{formatDateTime(reply?.createdAt)}</p>
+                    <p className="text-gray-400 text-sm">
+                      {formatDateTime(reply?.createdAt)}
+                    </p>
                     <p>{reply.content}</p>
                   </div>
                 ))

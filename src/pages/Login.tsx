@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "@/hooks/useAuth";
 import type { TLoginResponse } from "@/types";
+import { Clipboard } from "lucide-react";
 
 // Zod schema
 const loginSchema = z.object({
@@ -129,11 +130,31 @@ const Login = () => {
             </Link>
           </p>
 
-          {/* <div className="mt-6 p-4 bg-slate-800 rounded text-sm text-slate-300">
+          <div className="mt-6 p-4 bg-slate-800 rounded text-sm text-slate-300">
             <p className="font-semibold mb-2">Demo Credentials:</p>
-            <p>Email: demo@example.com</p>
-            <p>Password: any password</p>
-          </div> */}
+
+            <p
+              onClick={() => {
+                navigator.clipboard.writeText("user@demo.com");
+                toast.success("Email copied");
+              }}
+              className="space-x-2 cursor-pointer hover:text-white transition"
+            >
+              Email: <span className="font-mono">user@demo.com</span>
+              <Clipboard size={15} className="inline" />
+            </p>
+
+            <p
+              onClick={() => {
+                navigator.clipboard.writeText("demo12");
+                toast.success("Password copied");
+              }}
+              className="space-x-2 cursor-pointer hover:text-white transition"
+            >
+              Password: <span className="font-mono">demo12</span>
+              <Clipboard size={15} className="inline" />
+            </p>
+          </div>
         </div>
       </div>
     </div>
