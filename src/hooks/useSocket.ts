@@ -1,16 +1,13 @@
-"use client"
-
 import { useEffect, useState, useRef, useCallback } from "react"
 import io, { type Socket } from "socket.io-client"
-import { useAuth } from "./useAuth"
+import config from "@/config"
 
 export function useSocket() {
       const [isConnected, setIsConnected] = useState(false)
       const socketRef = useRef<Socket | null>(null)
-      const { accessToken } = useAuth();
 
       useEffect(() => {
-            const apiUrl = import.meta.env.VITE_API_SOCKET_URL || "http://localhost:5000";
+            const apiUrl = config?.socketBaseUrl;
 
             socketRef.current = io(apiUrl, {
                   /* auth: { token: accessToken },

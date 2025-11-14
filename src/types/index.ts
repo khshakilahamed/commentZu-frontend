@@ -13,6 +13,7 @@ export type TMeta = {
       limit: number;
       page: number;
       total: number;
+      totalPages: number;
 }
 
 export type TUser = {

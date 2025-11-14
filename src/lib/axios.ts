@@ -1,9 +1,10 @@
+import config from "@/config";
 import type { IGenericErrorResponse } from "@/types";
 import axios from "axios";
 
 // Create a custom axios instance
 const axiosInstance = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL, // from your .env file
+      baseURL: config.baseUrl, // from your .env file
       withCredentials: true, // optional — if you use cookies
 });
 

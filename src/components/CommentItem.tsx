@@ -62,8 +62,6 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
         `/v1/comment/${commentId}/dislike`
       );
 
-      console.log("Like: ", JSON.stringify(data?.data));
-
       if (data?.success) {
         setComments((prev) =>
           prev.map((comment) =>
@@ -78,7 +76,25 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
     } catch (_) {}
   };
 
-  //   console.log("comment: ", comment);
+  const handleDeleteParentComment = async (commentId: string) => {
+    if (!commentId) {
+      return;
+    }
+
+    try {
+      const { data } = await axiosInstance.delete<IApiResponse<TComment>>(
+        `/v1/comment/${commentId}/parent`
+      );
+
+      if (data?.success) {
+        setComments((prev) =>
+          prev.filter((comment) => comment?._id !== commentId)
+        );
+
+        emit("comment:delete", commentId);
+      }
+    } catch (_) {}
+  };
 
   return (
     <div className="p-2 border rounded-lg">
@@ -108,7 +124,10 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
         </p>
         {/* Dislike */}
         <p className="flex items-center gap-0.5">
-          <span onClick={()=> handleDislikeComment(comment?._id)} className="cursor-pointer">
+          <span
+            onClick={() => handleDislikeComment(comment?._id)}
+            className="cursor-pointer"
+          >
             {isLikeOrDislike(
               user?._id as string,
               comment?.dislikes as string[]
@@ -130,7 +149,11 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
             Reply
           </Button>
           {comment?.author?._id === user?._id && (
-            <Button variant={"link"} className="cursor-pointer">
+            <Button
+              onClick={() => handleDeleteParentComment(comment?._id)}
+              variant={"link"}
+              className="cursor-pointer"
+            >
               Delete
             </Button>
           )}
