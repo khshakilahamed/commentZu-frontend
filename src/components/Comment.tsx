@@ -47,7 +47,6 @@ const Comment = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
     reset,
   } = useForm<TCommentData>({
     resolver: zodResolver(commentSchema),
@@ -178,7 +177,7 @@ const Comment = () => {
   return (
     <div className="space-y-5 mb-10">
       <Card className="px-5 gap-2">
-        <h2 className="text">Share your thoughts</h2>
+        <h2 className="font-semibold text-primary">Share your thoughts</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
           <Textarea
             className="h-[100px]"
