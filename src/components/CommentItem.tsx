@@ -6,95 +6,138 @@ import {
   FaThumbsDown,
 } from "react-icons/fa6";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Textarea } from "./ui/textarea";
 import axiosInstance from "@/lib/axios";
 import type { IApiResponse, TComment } from "@/types";
+import { useForm } from "react-hook-form";
+import { type TCommentData } from "./Comment";
+import { useSocket } from "@/hooks/useSocket";
+import { formatDateTime } from "@/helpers/formatDateTime";
 
 interface CommentItemProps {
-  comment: any;
-  onCommentsUpdate?: () => void;
+  comment: TComment;
   setComments: React.Dispatch<React.SetStateAction<TComment[]>>;
   emit: (event: string, payload?: any) => void;
 }
 
 const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
   const { user } = useAuth();
-  const [showReply, setShowReply] = useState(false);
+  const { isConnected, on, off } = useSocket();
 
-  const isLikeOrDislike = (userId: string, data: string[]) => {
-    const isExist = data?.find((id) => id === userId);
+  const [showReplyField, setShowReplyField] = useState(false);
+  const [repliesMap, setRepliesMap] = useState<Record<string, TComment[]>>({});
+  const [isReplying, setIsReplying] = useState(false);
+  const [loadingReplies, setLoadingReplies] = useState(false);
 
-    return !!isExist;
+  const { register, handleSubmit, reset } = useForm<TCommentData>({
+    defaultValues: { content: "" },
+  });
+
+  // Real-time listener for new replies
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handleReplyAdded = (payload: TComment) => {
+      if (payload.parentComment !== comment._id) return; // only update relevant comment
+      setRepliesMap((prev) => ({
+        ...prev,
+        [comment._id]: [payload, ...(prev[comment._id] || [])],
+      }));
+    };
+
+    on("comment:reply:added", handleReplyAdded);
+
+    return () => {
+      off("comment:reply:added", handleReplyAdded);
+    };
+  }, [isConnected, on, comment._id]);
+
+  const isLikeOrDislike = (
+    userId: string,
+    data: TComment["likes"] | TComment["dislikes"]
+  ) => {
+    return !!data?.find((id) => id === userId);
   };
 
   const handleLikeComment = async (commentId: string) => {
-    if (!commentId) {
-      return;
-    }
     try {
       const { data } = await axiosInstance.get<IApiResponse<TComment>>(
         `/v1/comment/${commentId}/like`
       );
-
-      console.log("Like: ", JSON.stringify(data?.data));
-
       if (data?.success) {
         setComments((prev) =>
-          prev.map((comment) =>
-            comment._id === commentId
-              ? JSON.parse(JSON.stringify(data.data))
-              : comment
-          )
+          prev.map((c) => (c._id === commentId ? data.data : c))
         );
-
-        emit("comment:like", data?.data);
+        emit("comment:like", data.data);
       }
     } catch (_) {}
   };
 
   const handleDislikeComment = async (commentId: string) => {
-    if (!commentId) {
-      return;
-    }
     try {
       const { data } = await axiosInstance.get<IApiResponse<TComment>>(
         `/v1/comment/${commentId}/dislike`
       );
-
       if (data?.success) {
         setComments((prev) =>
-          prev.map((comment) =>
-            comment._id === commentId
-              ? JSON.parse(JSON.stringify(data.data))
-              : comment
-          )
+          prev.map((c) => (c._id === commentId ? data.data : c))
         );
-
-        emit("comment:like", data?.data);
+        emit("comment:dislike", data.data);
       }
     } catch (_) {}
   };
 
-  const handleDeleteParentComment = async (commentId: string) => {
-    if (!commentId) {
-      return;
-    }
-
+  const handleDeleteComment = async (commentId: string) => {
     try {
       const { data } = await axiosInstance.delete<IApiResponse<TComment>>(
         `/v1/comment/${commentId}/parent`
       );
-
       if (data?.success) {
-        setComments((prev) =>
-          prev.filter((comment) => comment?._id !== commentId)
-        );
-
+        setComments((prev) => prev.filter((c) => c._id !== commentId));
         emit("comment:delete", commentId);
       }
     } catch (_) {}
   };
+
+  const fetchReplies = useCallback(async () => {
+    setLoadingReplies(true);
+    try {
+      const { data } = await axiosInstance.get<IApiResponse<TComment[]>>(
+        `/v1/comment/${comment._id}/reply`
+      );
+      if (data?.success) {
+        setRepliesMap((prev) => ({ ...prev, [comment._id]: data.data }));
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  }, []);
+
+  const onSubmitReply = async (payload: TCommentData) => {
+    setIsReplying(true);
+    try {
+      const { data } = await axiosInstance.post<IApiResponse<TComment>>(
+        `/v1/comment/${comment._id}/reply`,
+        payload
+      );
+      if (data?.success) {
+        setRepliesMap((prev) => ({
+          ...prev,
+          [comment._id]: [data.data, ...(prev[comment._id] || [])],
+        }));
+        emit("comment:reply:add", data.data);
+        reset();
+      }
+    } catch (_) {
+    } finally {
+      setIsReplying(false);
+    }
+  };
+
+  const replies = repliesMap[comment._id] || [];
 
   return (
     <div className="p-2 border rounded-lg">
@@ -102,67 +145,90 @@ const CommentItem = ({ comment, setComments, emit }: CommentItemProps) => {
         <h2 className="text-primary font-bold">
           {comment?.author?.firstName} {comment?.author?.lastName}
         </h2>
+        <p className="text-gray-400 text-sm">{formatDateTime(comment?.createdAt)}</p>
         <p>{comment?.content}</p>
       </div>
+
       <div className="flex gap-3 mt-2">
         {/* Like */}
-        <p className="flex items-center gap-0.5">
-          <span
-            onClick={() => handleLikeComment(comment?._id)}
-            className="cursor-pointer"
-          >
-            {isLikeOrDislike(
-              user?._id as string,
-              comment?.likes as string[]
-            ) ? (
-              <FaThumbsUp />
-            ) : (
-              <FaRegThumbsUp />
-            )}
-          </span>
-          {comment?.totalLike ?? 0}
-        </p>
-        {/* Dislike */}
-        <p className="flex items-center gap-0.5">
-          <span
-            onClick={() => handleDislikeComment(comment?._id)}
-            className="cursor-pointer"
-          >
-            {isLikeOrDislike(
-              user?._id as string,
-              comment?.dislikes as string[]
-            ) ? (
-              <FaThumbsDown />
-            ) : (
-              <FaRegThumbsDown />
-            )}
-          </span>
-          {comment?.totalDislike ?? 0}
+        <p
+          className="flex items-center gap-0.5 cursor-pointer"
+          onClick={() => handleLikeComment(comment._id)}
+        >
+          {isLikeOrDislike(user?._id as string, comment.likes) ? (
+            <FaThumbsUp />
+          ) : (
+            <FaRegThumbsUp />
+          )}
+          {comment.totalLike ?? 0}
         </p>
 
-        <div>
-          <Button
-            onClick={() => setShowReply((prev) => !prev)}
-            variant={"link"}
-            className="cursor-pointer"
-          >
-            Reply
-          </Button>
-          {comment?.author?._id === user?._id && (
-            <Button
-              onClick={() => handleDeleteParentComment(comment?._id)}
-              variant={"link"}
-              className="cursor-pointer"
-            >
-              Delete
-            </Button>
+        {/* Dislike */}
+        <p
+          className="flex items-center gap-0.5 cursor-pointer"
+          onClick={() => handleDislikeComment(comment._id)}
+        >
+          {isLikeOrDislike(user?._id as string, comment.dislikes) ? (
+            <FaThumbsDown />
+          ) : (
+            <FaRegThumbsDown />
           )}
-        </div>
+          {comment.totalDislike ?? 0}
+        </p>
+
+        {/* Reply & Delete */}
+        <Button
+          variant="link"
+          onClick={() => {
+            setShowReplyField((prev) => !prev);
+            fetchReplies();
+          }}
+        >
+          Reply
+        </Button>
+        {comment.author._id === user?._id && (
+          <Button
+            variant="link"
+            onClick={() => handleDeleteComment(comment._id)}
+          >
+            Delete
+          </Button>
+        )}
       </div>
 
-      {showReply && (
-        <div className="mt-4 pt-4 border-t ">
-          <Textarea placeholder="Reply..." />
+      {showReplyField && (
+        <div className="ml-8 mt-4 space-y-2">
+          {loadingReplies && <p>Loading...</p>}
+          {!loadingReplies && (
+            <>
+              {replies?.length ? (
+                replies.map((reply) => (
+                  <div key={reply._id} className="border rounded-lg p-2 ml-4">
+                    <h2 className="text-sm text-primary font-bold">
+                      {reply.author.firstName} {reply.author.lastName}
+                    </h2>
+                    <p className="text-gray-400 text-sm">{formatDateTime(reply?.createdAt)}</p>
+                    <p>{reply.content}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-sm text-primary">
+                  No reply found
+                </p>
+              )}
+            </>
+          )}
+
+          {/* Reply form */}
+          <form
+            onSubmit={handleSubmit(onSubmitReply)}
+            className="space-y-2 pt-2"
+          >
+            <Textarea placeholder="Type here..." {...register("content")} />
+            <Button disabled={isReplying} size="sm" type="submit">
+              {isReplying ? "Replying..." : "Reply"}
+            </Button>
+          </form>
         </div>
       )}
     </div>

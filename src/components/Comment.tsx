@@ -17,12 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Skeleton } from "./ui/skeleton";
 
-const commentSchema = z.object({
+export const commentSchema = z.object({
   content: z.string().min(1),
 });
 
-type TCommentData = z.infer<typeof commentSchema>;
+export type TCommentData = z.infer<typeof commentSchema>;
 
 export const SORT_BY = {
   NEWEST: "newest",
@@ -35,7 +36,9 @@ export type SortByType = (typeof SORT_BY)[keyof typeof SORT_BY];
 const Comment = () => {
   const [comments, setComments] = useState<TComment[]>([]);
   const [metaData, setMetaData] = useState<TMeta>();
-  const [selectedSortBy, setSelectedSortBy] = useState<SortByType>(SORT_BY.NEWEST);
+  const [selectedSortBy, setSelectedSortBy] = useState<SortByType>(
+    SORT_BY.NEWEST
+  );
   const [page, setPage] = useState<number>(1);
   const [limit, _] = useState<number>(2);
   const [loading, setLoading] = useState(true);
@@ -53,7 +56,11 @@ const Comment = () => {
 
   // Fetch comments with page & sort
   const fetchComments = useCallback(
-    async (sort?: SortByType, pageNumber: number = 1, append: boolean = false) => {
+    async (
+      sort?: SortByType,
+      pageNumber: number = 1,
+      append: boolean = false
+    ) => {
       setLoading(true);
       try {
         const query = `?sortBy=${sort}&page=${pageNumber}&limit=${limit}`;
@@ -68,7 +75,9 @@ const Comment = () => {
           const responseData = data?.data?.data || [];
           setMetaData(data?.data?.meta);
 
-          setComments((prev) => (append ? [...prev, ...responseData] : responseData));
+          setComments((prev) =>
+            append ? [...prev, ...responseData] : responseData
+          );
         }
       } catch (error) {
         console.error(error);
@@ -100,7 +109,9 @@ const Comment = () => {
     };
 
     const handleDeleted = (commentId: string) => {
-      setComments((prev) => prev.filter((comment) => comment._id !== commentId));
+      setComments((prev) =>
+        prev.filter((comment) => comment._id !== commentId)
+      );
     };
 
     const handleLiked = (data: TComment) => {
@@ -115,7 +126,11 @@ const Comment = () => {
       setComments((prev) =>
         prev.map((c) =>
           c._id === data.commentId
-            ? { ...c, dislikes: data.dislikes, totalDislike: data.dislikes.length }
+            ? {
+                ...c,
+                dislikes: data.dislikes,
+                totalDislike: data.dislikes.length,
+              }
             : c
         )
       );
@@ -138,14 +153,17 @@ const Comment = () => {
   const onSubmit = async (payload: TCommentData) => {
     setIsPostingComment(true);
     try {
-      const { data } = await axiosInstance.post<IApiResponse<TComment>>("/v1/comment", payload);
+      const { data } = await axiosInstance.post<IApiResponse<TComment>>(
+        "/v1/comment",
+        payload
+      );
       if (data?.success) {
         setComments((prev) => [data.data, ...prev]);
         emit("comment:add", data.data);
         reset();
       }
-    } catch (_) {} 
-    finally {
+    } catch (_) {
+    } finally {
       setIsPostingComment(false);
     }
   };
@@ -162,8 +180,16 @@ const Comment = () => {
       <Card className="px-5 gap-2">
         <h2 className="text">Share your thoughts</h2>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-          <Textarea className="h-[100px]" placeholder="Type here..." {...register("content")} />
-          <Button disabled={isPostingComment} type="submit">
+          <Textarea
+            className="h-[100px]"
+            placeholder="Type here..."
+            {...register("content")}
+          />
+          <Button
+            disabled={isPostingComment}
+            type="submit"
+            className="cursor-pointer"
+          >
             {isPostingComment ? "Sharing..." : "Share"}
           </Button>
         </form>
@@ -175,14 +201,21 @@ const Comment = () => {
             Total Displaying: {comments?.length ?? 0}
           </h2>
 
-          <Select value={selectedSortBy} onValueChange={(v) => setSelectedSortBy(v as SortByType)}>
+          <Select
+            value={selectedSortBy}
+            onValueChange={(v) => setSelectedSortBy(v as SortByType)}
+          >
             <SelectTrigger className="capitalize">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {Object.values(SORT_BY).map((sortItem) => (
-                  <SelectItem key={sortItem} value={sortItem} className="capitalize">
+                  <SelectItem
+                    key={sortItem}
+                    value={sortItem}
+                    className="capitalize"
+                  >
                     {sortItem}
                   </SelectItem>
                 ))}
@@ -191,17 +224,36 @@ const Comment = () => {
           </Select>
         </div>
 
-        {comments.map((comment) => (
-          <CommentItem key={comment._id} comment={comment} setComments={setComments} emit={emit} />
-        ))}
-
-        {metaData?.page && metaData?.totalPages && page < metaData.totalPages && (
-          <div className="flex justify-center mt-5">
-            <Button onClick={handleLoadMore} disabled={loading}>
-              {loading ? "Loading..." : "Load More"}
-            </Button>
+        {/* Comments or Skeleton */}
+        {loading && page === 1 ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="p-3 border rounded-lg">
+                <Skeleton className="h-5 w-1/4 mb-2" /> {/* author */}
+                <Skeleton className="h-4 w-full" /> {/* content */}
+              </div>
+            ))}
           </div>
+        ) : (
+          comments.map((comment) => (
+            <CommentItem
+              key={comment._id}
+              comment={comment}
+              setComments={setComments}
+              emit={emit}
+            />
+          ))
         )}
+
+        {metaData?.page &&
+          metaData?.totalPages &&
+          page < metaData.totalPages && (
+            <div className="flex justify-center mt-5">
+              <Button onClick={handleLoadMore} disabled={loading}>
+                {loading ? "Loading..." : "Load More"}
+              </Button>
+            </div>
+          )}
       </Card>
     </div>
   );
