@@ -1,75 +1,51 @@
-# React + TypeScript + Vite
+## CommentZu - Backend
+CommentZu is a MERN stack comment system where users can create, view, like, and dislike comments in real time.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Important Links
+- Frontend live site:https://comment-zu-frontend.vercel.app/
+- Backend live site: https://commentzu-backend.onrender.com
 
-Currently, two official plugins are available:
+## Tech Stack / Packages
+#### Backend
+- MongodDB
+- ExpressJS
+- NodeJS
+- Mongoose
+- SocketIo
+- Typescript
+- JWT
+- Bcrypt
+- Cookie Parser
+- Cors
+- Dotenv
+- Zod
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+#### Frontend
+- ReactJS
+- Socket.io-Client
+- ShadcnUI
+- TailwindCSS
+- Zod
+- React hook Form
+- Axios
+- React router dom
+- Typescript
 
-## React Compiler
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## .env Credential
 
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Backend
+```env
+      NODE_ENV=development
+      PORT=5000
+      DATABASE_URL="mongodb+srv://commentzu-techzu:FUu0fX9JzRvklY7i@cluster0.svueayl.mongodb.net/commentzu"
+      SALT_ROUNDS=12
+      TOKEN_SECRET="secret_token"
+      TOKEN_EXPIRE="30d"
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Frontend
+```env
+      VITE_API_BASE_URL="https://commentzu-backend.onrender.com/api"
+      VITE_API_SOCKET_URL="https://commentzu-backend.onrender.com"
 ```
